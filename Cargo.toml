@@ -6,6 +6,7 @@ description = "C bindings for libcereal"
 
 [dependencies]
 cereal = { git = "https://github.com/jjpe/libcereal.git" }
+libc = "0.2"
 
 [lib]
 name = "libcereal_c_api"
