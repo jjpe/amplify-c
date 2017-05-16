@@ -1,0 +1,12 @@
+[package]
+name = "libcereal-c-api"
+version = "0.1.0"
+authors = ["Joey Ezechiëls <joey.ezechiels@gmail.com>"]
+description = "C bindings for libcereal"
+
+[dependencies]
+cereal = { git = "https://github.com/jjpe/libcereal.git" }
+
+[lib]
+name = "libcereal_c_api"
+crate-type = ["cdylib"]
