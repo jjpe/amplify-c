@@ -88,9 +88,9 @@ mod tests {
     use std::time::Duration;
 
     #[test]
-    fn it_works() {
+    fn basic_toolgraph_test() {
         let (broadcaster_tx, broadcaster_rx) = mpsc::channel::<Msg>();
-        let (client_tx, client_rx) = mpsc::channel::<Msg>();
+        let (source_tx, source_rx) = mpsc::channel::<Msg>();
         let (sink1_tx, sink1_rx) = mpsc::channel::<Msg>();
         let (sink2_tx, sink2_rx) = mpsc::channel::<Msg>();
         let (sink3_tx, sink3_rx) = mpsc::channel::<Msg>();
@@ -149,16 +149,16 @@ mod tests {
 
             thread::sleep(Duration::from_millis(1000));
             cclient_send(source, &msg);
-            client_tx.send(msg).unwrap();
+            source_tx.send(msg).unwrap();
         });
 
         let bmsg = broadcaster_rx.recv().unwrap();
-        let cmsg = client_rx.recv().unwrap();
+        let smsg = source_rx.recv().unwrap();
         let s1msg = sink1_rx.recv().unwrap();
         let s2msg = sink2_rx.recv().unwrap();
         let s3msg = sink3_rx.recv().unwrap();
 
-        assert_eq!(cmsg, bmsg, "{:#?} != {:#?}", cmsg, bmsg);
+        assert_eq!(smsg, bmsg, "{:#?} != {:#?}", smsg, bmsg);
         assert_eq!(bmsg, s1msg, "{:#?} != {:#?}", bmsg, s1msg);
         assert_eq!(bmsg, s2msg, "{:#?} != {:#?}", bmsg, s2msg);
         assert_eq!(bmsg, s3msg, "{:#?} != {:#?}", bmsg, s3msg);
