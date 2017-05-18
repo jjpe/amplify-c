@@ -19,6 +19,11 @@ pub extern "C" fn uclient_new() -> *mut UClient {
 }
 
 #[no_mangle]
+pub extern "C" fn uclient_destroy(client: *mut UClient) {
+    unsafe { drop(Box::from_raw(client)) }
+}
+
+#[no_mangle]
 pub extern "C" fn uclient_serialize_using_capn_proto(client: *mut UClient) {
     unsafe { (*client).set_serialization_method(Method::CapnProto); }
 }
@@ -53,14 +58,14 @@ pub extern "C" fn uclient_connect(client: *mut UClient) -> *mut CClient {
     Box::into_raw(Box::new(client))
 }
 
-#[no_mangle]
-pub extern "C" fn uclient_destroy(client: *mut UClient) {
-    unsafe { drop(Box::from_raw(client)) }
-}
-
 /******************************************************************************/
 /*                              CClient                                       */
 /******************************************************************************/
+#[no_mangle]
+pub extern "C" fn cclient_destroy(client: *mut CClient) {
+    unsafe { drop(Box::from_raw(client)) }
+}
+
 #[no_mangle]
 pub extern "C" fn cclient_send(client: *mut CClient, msg: *const Msg) {
     unsafe { (*client).send(&*msg).unwrap(/* TODO: ClientErr */) }
@@ -69,11 +74,6 @@ pub extern "C" fn cclient_send(client: *mut CClient, msg: *const Msg) {
 #[no_mangle]
 pub extern "C" fn cclient_receive(client: *mut CClient, msg: *mut Msg) {
     unsafe { (*client).receive(&mut *msg).unwrap(/* TODO: ClientErr */) }
-}
-
-#[no_mangle]
-pub extern "C" fn cclient_destroy(client: *mut CClient) {
-    unsafe { drop(Box::from_raw(client)) }
 }
 
 /******************************************************************************/
@@ -141,10 +141,6 @@ pub extern "C" fn msg_get_origin(msg: *mut Msg) -> *const c_uchar {
 pub extern "C" fn msg_set_contents(msg: *mut Msg, contents: *mut Contents) {
     assert!(!msg.is_null(), "msg must not be null");
     unsafe { *(*msg).contents_mut() = consume_raw(contents); }
-    // let contents =
-    //     if contents.is_null() { None }
-    //     else { Some(unsafe { *Box::from_raw(contents) }) };
-    // unsafe { *(*msg).contents_mut() = contents; }
 }
 
 #[no_mangle]
@@ -188,10 +184,6 @@ pub extern "C" fn msg_count_regions(msg: *mut Msg) -> c_ulonglong {
 pub extern "C" fn msg_set_language(msg: *mut Msg, lang: *mut Language) {
     assert!(!msg.is_null(), "msg must not be null");
     unsafe { *(*msg).language_mut() = consume_raw(lang); }
-    // let lang =
-    //     if lang.is_null() { None }
-    //     else { unsafe { Some(*Box::from_raw(lang)) } };
-    // unsafe { *(*msg).language_mut() = lang; }
 }
 
 #[no_mangle]
@@ -207,10 +199,6 @@ pub extern "C" fn msg_get_language(msg: *mut Msg) -> *const Language {
 pub extern "C" fn msg_set_ast(msg: *mut Msg, ast: *mut Ast) {
     assert!(!msg.is_null(), "msg must not be null");
     unsafe { *(*msg).ast_mut() = consume_raw(ast); }
-    // let ast =
-    //     if ast.is_null() { None }
-    //     else { unsafe { Some(*Box::from_raw(ast)) } };
-    // unsafe { *(*msg).ast_mut() = ast; }
 }
 
 #[no_mangle]
@@ -237,6 +225,12 @@ pub extern "C" fn contents_new_entries() -> *mut Contents {
 }
 
 #[no_mangle]
+pub extern "C" fn contents_destroy(contents: *mut Contents) {
+    assert!(!contents.is_null(), "contents must not be null");
+    unsafe { drop(Box::from_raw(contents)) }
+}
+
+#[no_mangle]
 pub extern "C" fn contents_add_text(contents: *mut Contents, text: *const c_uchar) {
     assert!(!contents.is_null(), "contents must not be null");
     assert!(!text.is_null(), "text must not be null");
@@ -257,18 +251,18 @@ pub extern "C" fn contents_add_entry(contents: *mut Contents, entry: *const c_uc
     }
 }
 
-#[no_mangle]
-pub extern "C" fn contents_destroy(contents: *mut Contents) {
-    assert!(!contents.is_null(), "contents must not be null");
-    unsafe { drop(Box::from_raw(contents)) }
-}
-
 /******************************************************************************/
 /*                              Region                                        */
 /******************************************************************************/
 #[no_mangle]
 pub extern "C" fn region_new(begin: c_ulonglong, end: c_ulonglong) -> *mut Region {
     Box::into_raw(Box::new(Region { begin: begin, end: end }))
+}
+
+#[no_mangle]
+pub extern "C" fn region_destroy(region: *mut Region) {
+    assert!(!region.is_null(), "region must not be null");
+    unsafe { drop(Box::from_raw(region)) }
 }
 
 #[no_mangle]
@@ -283,12 +277,6 @@ pub extern "C" fn region_get_end(region: *const Region) -> c_ulonglong {
     unsafe { (*region).end }
 }
 
-#[no_mangle]
-pub extern "C" fn region_destroy(region: *mut Region) {
-    assert!(!region.is_null(), "region must not be null");
-    unsafe { drop(Box::from_raw(region)) }
-}
-
 /******************************************************************************/
 /*                              Language                                      */
 /******************************************************************************/
@@ -297,6 +285,12 @@ pub extern "C" fn language_new(language: *const c_uchar) -> *mut Language {
     assert!(!language.is_null(), "language must not be null");
     let string: &str = c_string_to_str(language);
     Box::into_raw(Box::new(Language::from(string) ))
+}
+
+#[no_mangle]
+pub extern "C" fn language_destroy(language: *mut Language) {
+    assert!(!language.is_null(), "language must not be null");
+    unsafe { drop(Box::from_raw(language)) }
 }
 
 #[no_mangle]
@@ -315,12 +309,6 @@ pub extern "C" fn language_get(language: *mut Language) -> *const c_char {
     cstring.as_ptr()
 }
 
-#[no_mangle]
-pub extern "C" fn language_destroy(language: *mut Language) {
-    assert!(!language.is_null(), "language must not be null");
-    unsafe { drop(Box::from_raw(language)) }
-}
-
 /******************************************************************************/
 /*                              Ast                                           */
 /******************************************************************************/
@@ -329,6 +317,12 @@ pub extern "C" fn ast_new(name: *const c_uchar) -> *mut Ast {
     let name: &str = c_string_to_str(name);
     let ast = Ast::new(name);
     Box::into_raw(Box::new(ast))
+}
+
+#[no_mangle]
+pub extern "C" fn ast_destroy(ast: *mut Ast) {
+    assert!(!ast.is_null(), "ast must not be null");
+    unsafe { drop(Box::from_raw(ast)) }
 }
 
 #[no_mangle]
@@ -369,12 +363,6 @@ pub extern "C" fn ast_clear_children(ast: *mut Ast) {
 pub extern "C" fn ast_count_children(ast: *mut Ast) -> c_ulonglong {
     assert!(!ast.is_null(), "ast must not be null");
     unsafe { (*ast).children_ref().len() as c_ulonglong }
-}
-
-#[no_mangle]
-pub extern "C" fn ast_destroy(ast: *mut Ast) {
-    assert!(!ast.is_null(), "ast must not be null");
-    unsafe { drop(Box::from_raw(ast)) }
 }
 
 /******************************************************************************/
