@@ -10,6 +10,10 @@ use std::mem;
 pub const SER_METHOD_CAPNP: c_int = 0x0;
 pub const SER_METHOD_JSON: c_int = 0x1;
 
+/// NOTE: The getters usually return a (*const T) borrow into the data, whereas
+/// the setters consume their (*mut T) argument. This is important with regards
+/// to memory safety.
+
 /******************************************************************************/
 /*                              UClient                                       */
 /******************************************************************************/
@@ -98,13 +102,10 @@ pub extern "C" fn msg_set_source(msg: *mut Msg, source: *const c_uchar) {
 }
 
 #[no_mangle]
-pub extern "C" fn msg_get_source(msg: *mut Msg) -> *const c_char {
+pub extern "C" fn msg_get_source(msg: *mut Msg) -> *const c_uchar {
     assert!(!msg.is_null(), "msg must not be null");
     let source: &str = unsafe { (*msg).source_ref() };
-    let cstring = CString::new(source).unwrap(/* TODO: */);
-    let ptr = cstring.as_ptr();
-    mem::forget(cstring);
-    ptr
+    str_to_c_string(source) as *const c_uchar
 }
 
 #[no_mangle]
@@ -133,7 +134,7 @@ pub extern "C" fn msg_get_origin(msg: *mut Msg) -> *const c_uchar {
     assert!(!msg.is_null(), "msg must not be null");
     match unsafe { (*msg).origin_ref() } {
         None => std::ptr::null(),
-        Some(origin) => origin.as_ptr(),
+        Some(origin) => str_to_c_string(origin) as *const c_uchar,
     }
 }
 
@@ -231,12 +232,40 @@ pub extern "C" fn contents_destroy(contents: *mut Contents) {
 }
 
 #[no_mangle]
+pub extern "C" fn contents_is_text(contents: *mut Contents) -> c_int {
+    if contents.is_null() {  return false as c_int;  }
+    match unsafe { &*contents } {
+        &Contents::Text(_) => true as c_int,
+        _ => false as c_int,
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn contents_add_text(contents: *mut Contents, text: *const c_uchar) {
     assert!(!contents.is_null(), "contents must not be null");
     assert!(!text.is_null(), "text must not be null");
     match unsafe { &mut *contents } {
         &mut Contents::Text(ref mut t) => t.push_str(c_string_to_str(text)),
         c => panic!("Can only add text to Contents::Text, but found {:?}", c),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn contents_get_text(contents: *mut Contents) -> *const c_uchar {
+    assert!(!contents.is_null(), "contents must not be null");
+    match unsafe { &*contents } {
+        &Contents::Text(ref text) =>
+            str_to_c_string(text.as_str()) as *const c_uchar,
+        c => panic!("Expected Contents::Text, but found {:?}", c),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn contents_is_entries(contents: *mut Contents) -> c_int {
+    if contents.is_null() {  return false as c_int;  }
+    match unsafe { &*contents } {
+        &Contents::Entries(_) => true as c_int,
+        _ => false as c_int,
     }
 }
 
@@ -248,6 +277,30 @@ pub extern "C" fn contents_add_entry(contents: *mut Contents, entry: *const c_uc
     match unsafe { &mut *contents } {
         &mut Contents::Entries(ref mut vec) => vec.push(String::from(entry)),
         c => panic!("Can only add an entry to Contents::Entries, but found {:?}", c),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn contents_get_entry(contents: *mut Contents, index: c_ulonglong)
+                                     -> *const c_uchar {
+    assert!(!contents.is_null(), "contents must not be null");
+    match unsafe { &*contents } {
+        &Contents::Entries(ref entries) => {
+            let num_entries = contents_count_entries(contents);
+            assert!(index < num_entries, "index out of bounds: {} >= {}", index, num_entries);
+            let string: &String = entries.get(index as usize).unwrap(/* TODO: None */);
+            str_to_c_string(string.as_str()) as *const c_uchar
+        },
+        c => panic!("Expected Contents::Entries, but found {:?}", c),
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn contents_count_entries(contents: *mut Contents) -> c_ulonglong {
+    assert!(!contents.is_null(), "contents must not be null");
+    match unsafe { &*contents } {
+        &Contents::Entries(ref entries) => entries.len() as c_ulonglong,
+        c => panic!("Expected Contents::Entries, but found {:?}", c),
     }
 }
 
@@ -284,7 +337,7 @@ pub extern "C" fn region_get_end(region: *const Region) -> c_ulonglong {
 pub extern "C" fn language_new(language: *const c_uchar) -> *mut Language {
     assert!(!language.is_null(), "language must not be null");
     let string: &str = c_string_to_str(language);
-    Box::into_raw(Box::new(Language::from(string) ))
+    Box::into_raw(Box::new(Language::from(string)))
 }
 
 #[no_mangle]
@@ -294,7 +347,7 @@ pub extern "C" fn language_destroy(language: *mut Language) {
 }
 
 #[no_mangle]
-pub extern "C" fn language_set(language: *mut Language, new: *const c_uchar) {
+pub extern "C" fn language_set_name(language: *mut Language, new: *const c_uchar) {
     assert!(!language.is_null(), "language must not be null");
     assert!(!new.is_null(), "new must not be null");
     let new: &str = c_string_to_str(new);
@@ -302,11 +355,11 @@ pub extern "C" fn language_set(language: *mut Language, new: *const c_uchar) {
 }
 
 #[no_mangle]
-pub extern "C" fn language_get(language: *mut Language) -> *const c_char {
-    assert!(!language.is_null(), "language must not be null");
-    let lang_ref = unsafe { (*language).as_ref() };
-    let cstring = CString::new(lang_ref).unwrap(/* TODO: NulError */);
-    cstring.as_ptr()
+pub extern "C" fn language_get_name(language: *mut Language) -> *const c_char {
+    let lang: &str =
+        if language.is_null() { "" }
+        else { unsafe { (*language).as_ref() } };
+    str_to_c_string(lang)
 }
 
 /******************************************************************************/
@@ -314,8 +367,7 @@ pub extern "C" fn language_get(language: *mut Language) -> *const c_char {
 /******************************************************************************/
 #[no_mangle]
 pub extern "C" fn ast_new(name: *const c_uchar) -> *mut Ast {
-    let name: &str = c_string_to_str(name);
-    let ast = Ast::new(name);
+    let ast = Ast::new(c_string_to_str(name));
     Box::into_raw(Box::new(ast))
 }
 
@@ -326,11 +378,25 @@ pub extern "C" fn ast_destroy(ast: *mut Ast) {
 }
 
 #[no_mangle]
+pub extern "C" fn ast_get_name(ast: *mut Ast) -> *const c_uchar {
+    assert!(!ast.is_null(), "ast must not be null");
+    let name = unsafe { (*ast).name_ref() };
+    str_to_c_string(name) as *const c_uchar
+}
+
+#[no_mangle]
 pub extern "C" fn ast_set_data(ast: *mut Ast, data: *const c_uchar) {
     assert!(!ast.is_null(), "ast must not be null");
     assert!(!data.is_null(), "data must not be null");
     let data: &str = c_string_to_str(data);
     unsafe { *(*ast).data_mut() = String::from(data); }
+}
+
+#[no_mangle]
+pub extern "C" fn ast_get_data(ast: *mut Ast) -> *const c_uchar {
+    assert!(!ast.is_null(), "ast must not be null");
+    let data = unsafe { (*ast).data_ref() };
+    str_to_c_string(data) as *const c_uchar
 }
 
 #[no_mangle]
@@ -349,6 +415,8 @@ pub extern "C" fn ast_add_child(ast: *mut Ast, child: *mut Ast) {
 #[no_mangle]
 pub extern "C" fn ast_get_child(ast: *mut Ast, index: c_ulonglong) -> *const Ast {
     assert!(!ast.is_null(), "ast must not be null");
+    let num_children = ast_count_children(ast);
+    assert!(index < num_children, "index out of bounds: {} >= {}", index, num_children);
     let children = unsafe { (*ast).children_ref() };
     &children[index as usize]
 }
@@ -371,6 +439,13 @@ pub extern "C" fn ast_count_children(ast: *mut Ast) -> c_ulonglong {
 fn c_string_to_str<'s>(cstring: *const c_uchar) -> &'s str {
     let cstr = unsafe { CStr::from_ptr(cstring as *const c_char) };
     cstr.to_str().unwrap(/* TODO: str::Utf8Error */)
+}
+
+fn str_to_c_string(s: &str) -> *const c_char {
+    let cstring = CString::new(s).unwrap(/* TODO: NulError */);
+    let ptr = cstring.as_ptr();
+    mem::forget(cstring);
+    ptr
 }
 
 unsafe fn consume_raw<T>(ptr: *mut T) -> Option<T> {
