@@ -56,6 +56,26 @@ pub extern "C" fn uclient_set_tx_addr(client: *mut UClient, addr: *const c_uchar
 }
 
 #[no_mangle]
+pub extern "C" fn uclient_set_rx_timeout(client: *mut UClient, timeout_ms: c_int) {
+    let timeout = match timeout {
+        -1 => Timeout::Block,
+        0 => Timeout::None,
+        millis => Timeout::Millis(millis as usize),
+    };
+    unsafe { (*client).set_receive_timeout(timeout); }
+}
+
+#[no_mangle]
+pub extern "C" fn uclient_set_tx_timeout(client: *mut UClient, timeout_ms: c_int) {
+    let timeout = match timeout {
+        -1 => Timeout::Block,
+        0 => Timeout::None,
+        millis => Timeout::Millis(millis as usize),
+    };
+    unsafe { (*client).set_send_timeout(timeout); }
+}
+
+#[no_mangle]
 pub extern "C" fn uclient_connect(client: *mut UClient) -> *mut CClient {
     let client: Box<UClient> = unsafe { Box::from_raw(client) };
     let client: CClient = client.connect().unwrap(/* TODO: ClientErr */);
@@ -68,6 +88,26 @@ pub extern "C" fn uclient_connect(client: *mut UClient) -> *mut CClient {
 #[no_mangle]
 pub extern "C" fn cclient_destroy(client: *mut CClient) {
     unsafe { drop(Box::from_raw(client)) }
+}
+
+#[no_mangle]
+pub extern "C" fn cclient_set_rx_timeout(client: *mut CClient, timeout_ms: c_int) {
+    let timeout = match timeout {
+        -1 => Timeout::Block,
+        0 => Timeout::None,
+        millis => Timeout::Millis(millis as usize),
+    };
+    unsafe { (*client).set_receive_timeout(timeout); }
+}
+
+#[no_mangle]
+pub extern "C" fn cclient_set_tx_timeout(client: *mut CClient, timeout_ms: c_int) {
+    let timeout = match timeout {
+        -1 => Timeout::Block,
+        0 => Timeout::None,
+        millis => Timeout::Millis(millis as usize),
+    };
+    unsafe { (*client).set_send_timeout(timeout); }
 }
 
 #[no_mangle]
