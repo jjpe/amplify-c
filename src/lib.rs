@@ -1,14 +1,11 @@
 extern crate libc;
 extern crate libcereal;
 
-use libc::{c_char, c_int, c_uchar, c_ulonglong };
+use libc::{c_char, c_int, c_uint, c_uchar, c_ulonglong };
 use libcereal::*;
 use libcereal::amplify::*;
 use std::ffi::{CStr, CString};
 use std::mem;
-
-pub const SER_METHOD_CAPNP: c_int = 0x0;
-pub const SER_METHOD_JSON: c_int = 0x1;
 
 /// NOTE: The getters usually return a (*const T) borrow into the data, whereas
 /// the setters consume their (*mut T) argument. This is important with regards
@@ -57,22 +54,24 @@ pub extern "C" fn uclient_set_tx_addr(client: *mut UClient, addr: *const c_uchar
 
 #[no_mangle]
 pub extern "C" fn uclient_set_rx_timeout(client: *mut UClient, timeout_ms: c_int) {
-    let timeout = match timeout_ms {
-        -1 => Timeout::Block,
-        0 => Timeout::None,
-        millis => Timeout::Millis(millis as usize),
-    };
+    let timeout = Timeout::from_number(timeout_ms as isize);
     unsafe { (*client).set_receive_timeout(timeout); }
 }
 
 #[no_mangle]
 pub extern "C" fn uclient_set_tx_timeout(client: *mut UClient, timeout_ms: c_int) {
-    let timeout = match timeout_ms {
-        -1 => Timeout::Block,
-        0 => Timeout::None,
-        millis => Timeout::Millis(millis as usize),
-    };
+    let timeout = Timeout::from_number(timeout_ms as isize);
     unsafe { (*client).set_send_timeout(timeout); }
+}
+
+#[no_mangle]
+pub extern "C" fn uclient_set_rx_hwm(client: *mut UClient, hwm: c_uint) {
+    unsafe { (*client).set_receive_hwm(Hwm::from_number(hwm as usize)); }
+}
+
+#[no_mangle]
+pub extern "C" fn uclient_set_tx_hwm(client: *mut UClient, hwm: c_uint) {
+    unsafe { (*client).set_send_hwm(Hwm::from_number(hwm as usize)); }
 }
 
 #[no_mangle]
@@ -92,22 +91,26 @@ pub extern "C" fn cclient_destroy(client: *mut CClient) {
 
 #[no_mangle]
 pub extern "C" fn cclient_set_rx_timeout(client: *mut CClient, timeout_ms: c_int) {
-    let timeout = match timeout_ms {
-        -1 => Timeout::Block,
-        0 => Timeout::None,
-        millis => Timeout::Millis(millis as usize),
-    };
-    unsafe { (*client).set_receive_timeout(timeout); }
+    let timeout = Timeout::from_number(timeout_ms as isize);
+    unsafe { (*client).set_receive_timeout(timeout).unwrap(/* TODO: ClientErr */); }
 }
 
 #[no_mangle]
 pub extern "C" fn cclient_set_tx_timeout(client: *mut CClient, timeout_ms: c_int) {
-    let timeout = match timeout_ms {
-        -1 => Timeout::Block,
-        0 => Timeout::None,
-        millis => Timeout::Millis(millis as usize),
-    };
-    unsafe { (*client).set_send_timeout(timeout); }
+    let timeout = Timeout::from_number(timeout_ms as isize);
+    unsafe { (*client).set_send_timeout(timeout).unwrap(/* TODO: ClientErr */); }
+}
+
+#[no_mangle]
+pub extern "C" fn cclient_set_rx_hwm(client: *mut CClient, hwm: c_uint) {
+    let hwm = Hwm::from_number(hwm as usize);
+    unsafe { (*client).set_receive_hwm(hwm).unwrap(/* TODO: ClientErr */); }
+}
+
+#[no_mangle]
+pub extern "C" fn cclient_set_tx_hwm(client: *mut CClient, hwm: c_uint) {
+    let hwm = Hwm::from_number(hwm as usize);
+    unsafe { (*client).set_send_hwm(hwm).unwrap(/* TODO: ClientErr */); }
 }
 
 #[no_mangle]
