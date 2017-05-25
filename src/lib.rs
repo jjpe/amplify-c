@@ -76,28 +76,28 @@ fn ureporter_connect(ureporter: *mut UReporter) -> *mut CReporter {
 /******************************************************************************/
 #[no_mangle]
 pub unsafe extern "C"
-fn creporter_destroy(client: *mut CReporter) {
-    drop(Box::from_raw(client))
+fn creporter_destroy(creporter: *mut CReporter) {
+    drop(Box::from_raw(creporter))
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn creporter_send(client: *mut CReporter, report: *const Report) {
-    (*client).send(&*report).unwrap(/* TODO: ClientErr */)
+fn creporter_send(creporter: *mut CReporter, report: *const Report) {
+    (*creporter).send(&*report).unwrap(/* TODO: ReportErr */)
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn creporter_set_tx_timeout(client: *mut CReporter, timeout_ms: c_int) {
+fn creporter_set_tx_timeout(creporter: *mut CReporter, timeout_ms: c_int) {
     let timeout = Timeout::from_number(timeout_ms as isize);
-    (*client).set_send_timeout(timeout).unwrap(/* TODO: ClientErr */);
+    (*creporter).set_send_timeout(timeout).unwrap(/* TODO: ReportErr */);
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn creporter_set_tx_hwm(client: *mut CReporter, hwm: c_uint) {
+fn creporter_set_tx_hwm(creporter: *mut CReporter, hwm: c_uint) {
     let hwm = Hwm::from_number(hwm as usize);
-    (*client).set_send_hwm(hwm).unwrap(/* TODO: ClientErr */);
+    (*creporter).set_send_hwm(hwm).unwrap(/* TODO: ReportErr */);
 }
 
 
@@ -112,8 +112,8 @@ fn report_new() -> *mut Report {
 
 #[no_mangle]
 pub unsafe extern "C"
-fn report_destroy(msg: *mut Report) {
-    drop(Box::from_raw(msg))
+fn report_destroy(report: *mut Report) {
+    drop(Box::from_raw(report))
 }
 
 #[no_mangle]
