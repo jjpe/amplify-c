@@ -12,36 +12,36 @@ use std::mem;
 /// to memory safety.
 
 /******************************************************************************/
-/*                              UReportSender                                 */
+/*                              UReporter                                 */
 /******************************************************************************/
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_new() -> *mut UReportSender {
-    Box::into_raw(Box::new(UReportSender::new().unwrap(/* TODO: ReportErr */)))
+fn ureport_sender_new() -> *mut UReporter {
+    Box::into_raw(Box::new(UReporter::new().unwrap(/* TODO: ReportErr */)))
 }
 
 
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_destroy(sender: *mut UReportSender) {
+fn ureport_sender_destroy(sender: *mut UReporter) {
     drop(Box::from_raw(sender))
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_serialize_using_capn_proto(sender: *mut UReportSender) {
+fn ureport_sender_serialize_using_capn_proto(sender: *mut UReporter) {
     (*sender).set_serialization_method(Method::CapnProto);
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_serialize_using_json(sender: *mut UReportSender) {
+fn ureport_sender_serialize_using_json(sender: *mut UReporter) {
     (*sender).set_serialization_method(Method::Json);
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_set_tx_addr(sender: *mut UReportSender, addr: *const c_uchar) {
+fn ureport_sender_set_tx_addr(sender: *mut UReporter, addr: *const c_uchar) {
     if addr.is_null() {  panic!("addr must not be null");  }
     let cstr: &CStr = CStr::from_ptr(addr as *const c_char);
     let addr: &str = cstr.to_str().unwrap(/* TODO: str::UTf8Error */);
@@ -51,51 +51,51 @@ fn ureport_sender_set_tx_addr(sender: *mut UReportSender, addr: *const c_uchar) 
 
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_set_tx_timeout(sender: *mut UReportSender, timeout_ms: c_int) {
+fn ureport_sender_set_tx_timeout(sender: *mut UReporter, timeout_ms: c_int) {
     let timeout = Timeout::from_number(timeout_ms as isize);
     (*sender).set_send_timeout(timeout);
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_set_tx_hwm(sender: *mut UReportSender, hwm: c_uint) {
+fn ureport_sender_set_tx_hwm(sender: *mut UReporter, hwm: c_uint) {
     (*sender).set_send_hwm(Hwm::from_number(hwm as usize));
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn ureport_sender_connect(sender: *mut UReportSender) -> *mut CReportSender {
-    let sender: Box<UReportSender> = Box::from_raw(sender);
-    let sender: CReportSender = sender.connect().unwrap(/* TODO: ReportErr */);
+fn ureport_sender_connect(sender: *mut UReporter) -> *mut CReporter {
+    let sender: Box<UReporter> = Box::from_raw(sender);
+    let sender: CReporter = sender.connect().unwrap(/* TODO: ReportErr */);
     Box::into_raw(Box::new(sender))
 }
 
 
 /******************************************************************************/
-/*                              CReportSender                                 */
+/*                              CReporter                                 */
 /******************************************************************************/
 #[no_mangle]
 pub unsafe extern "C"
-fn creport_sender_destroy(client: *mut CReportSender) {
+fn creport_sender_destroy(client: *mut CReporter) {
     drop(Box::from_raw(client))
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn creport_sender_send(client: *mut CReportSender, report: *const Report) {
+fn creport_sender_send(client: *mut CReporter, report: *const Report) {
     (*client).send(&*report).unwrap(/* TODO: ClientErr */)
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn creport_sender_set_tx_timeout(client: *mut CReportSender, timeout_ms: c_int) {
+fn creport_sender_set_tx_timeout(client: *mut CReporter, timeout_ms: c_int) {
     let timeout = Timeout::from_number(timeout_ms as isize);
     (*client).set_send_timeout(timeout).unwrap(/* TODO: ClientErr */);
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn creport_sender_set_tx_hwm(client: *mut CReportSender, hwm: c_uint) {
+fn creport_sender_set_tx_hwm(client: *mut CReporter, hwm: c_uint) {
     let hwm = Hwm::from_number(hwm as usize);
     (*client).set_send_hwm(hwm).unwrap(/* TODO: ClientErr */);
 }
