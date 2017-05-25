@@ -343,19 +343,19 @@ fn msg_destroy(msg: *mut Msg) {
 
 #[no_mangle]
 pub unsafe extern "C"
-fn msg_set_source(msg: *mut Msg, source: *const c_uchar) {
+fn msg_set_process(msg: *mut Msg, process: *const c_uchar) {
     assert!(!msg.is_null(), "msg must not be null");
-    assert!(!source.is_null(), "source must not be null");
-    let string: String = c_string_to_str(source).to_owned();
-    *(*msg).source_mut() = string;
+    assert!(!process.is_null(), "process must not be null");
+    let string: String = c_string_to_str(process).to_owned();
+    *(*msg).process_mut() = string;
 }
 
 #[no_mangle]
 pub unsafe extern "C"
-fn msg_get_source(msg: *mut Msg) -> *const c_uchar {
+fn msg_get_process(msg: *mut Msg) -> *const c_uchar {
     assert!(!msg.is_null(), "msg must not be null");
-    let source: &str = (*msg).source_ref();
-    str_to_c_string(source) as *const c_uchar
+    let process: &str = (*msg).process_ref();
+    str_to_c_string(process) as *const c_uchar
 }
 
 #[no_mangle]
@@ -370,6 +370,23 @@ pub unsafe extern "C"
 fn msg_get_request_number(msg: *mut Msg) -> c_ulonglong {
     assert!(!msg.is_null(), "msg must not be null");
     (*msg).request_number()
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn msg_set_kind(msg: *mut Msg, kind: *const c_uchar) {
+    assert!(!msg.is_null(), "msg must not be null");
+    assert!(!kind.is_null(), "kind must not be null");
+    let string: String = c_string_to_str(kind).to_owned();
+    *(*msg).kind_mut() = string;
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn msg_get_kind(msg: *mut Msg) -> *const c_uchar {
+    assert!(!msg.is_null(), "msg must not be null");
+    let kind: &str = (*msg).kind_ref();
+    str_to_c_string(kind) as *const c_uchar
 }
 
 #[no_mangle]
