@@ -12,6 +12,191 @@ use std::mem;
 /// to memory safety.
 
 /******************************************************************************/
+/*                              UReportSender                                 */
+/******************************************************************************/
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_new() -> *mut UReportSender {
+    Box::into_raw(Box::new(UReportSender::new().unwrap(/* TODO: ReportErr */)))
+}
+
+
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_destroy(sender: *mut UReportSender) {
+    drop(Box::from_raw(sender))
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_serialize_using_capn_proto(sender: *mut UReportSender) {
+    (*sender).set_serialization_method(Method::CapnProto);
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_serialize_using_json(sender: *mut UReportSender) {
+    (*sender).set_serialization_method(Method::Json);
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_set_tx_addr(sender: *mut UReportSender, addr: *const c_uchar) {
+    if addr.is_null() {  panic!("addr must not be null");  }
+    let cstr: &CStr = CStr::from_ptr(addr as *const c_char);
+    let addr: &str = cstr.to_str().unwrap(/* TODO: str::UTf8Error */);
+    let addr: Url = Url::parse(addr).unwrap(/* TODO: url::ParseError */);
+    (*sender).set_send_addr(&addr);
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_set_tx_timeout(sender: *mut UReportSender, timeout_ms: c_int) {
+    let timeout = Timeout::from_number(timeout_ms as isize);
+    (*sender).set_send_timeout(timeout);
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_set_tx_hwm(sender: *mut UReportSender, hwm: c_uint) {
+    (*sender).set_send_hwm(Hwm::from_number(hwm as usize));
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn ureport_sender_connect(sender: *mut UReportSender) -> *mut CReportSender {
+    let sender: Box<UReportSender> = Box::from_raw(sender);
+    let sender: CReportSender = sender.connect().unwrap(/* TODO: ReportErr */);
+    Box::into_raw(Box::new(sender))
+}
+
+
+/******************************************************************************/
+/*                              CReportSender                                 */
+/******************************************************************************/
+#[no_mangle]
+pub unsafe extern "C"
+fn creport_sender_destroy(client: *mut CReportSender) {
+    drop(Box::from_raw(client))
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn creport_sender_send(client: *mut CReportSender, report: *const Report) {
+    (*client).send(&*report).unwrap(/* TODO: ClientErr */)
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn creport_sender_set_tx_timeout(client: *mut CReportSender, timeout_ms: c_int) {
+    let timeout = Timeout::from_number(timeout_ms as isize);
+    (*client).set_send_timeout(timeout).unwrap(/* TODO: ClientErr */);
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn creport_sender_set_tx_hwm(client: *mut CReportSender, hwm: c_uint) {
+    let hwm = Hwm::from_number(hwm as usize);
+    (*client).set_send_hwm(hwm).unwrap(/* TODO: ClientErr */);
+}
+
+
+/******************************************************************************/
+/*                              Report                                        */
+/******************************************************************************/
+#[no_mangle]
+pub unsafe extern "C"
+fn report_new() -> *mut Report {
+    Box::into_raw(Box::new(Report::default()))
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_destroy(msg: *mut Report) {
+    drop(Box::from_raw(msg))
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_set_action(report: *mut Report, action: *const c_uchar) {
+    assert!(!report.is_null(), "report must not be null");
+    assert!(!action.is_null(), "action must not be null");
+    *(*report).action_mut() = c_string_to_str(action).to_owned();
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_get_action(report: *mut Report) -> *const c_uchar {
+    assert!(!report.is_null(), "report must not be null");
+    let action: &str = (*report).action_ref();
+    str_to_c_string(action) as *const c_uchar
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_set_process(report: *mut Report, process: *const c_uchar) {
+    assert!(!report.is_null(), "report must not be null");
+    assert!(!process.is_null(), "process must not be null");
+    *(*report).process_mut() = c_string_to_str(process).to_owned();
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_get_process(report: *mut Report) -> *const c_uchar {
+    assert!(!report.is_null(), "report must not be null");
+    let process: &str = (*report).process_ref();
+    str_to_c_string(process) as *const c_uchar
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_set_request_number(report: *mut Report, reqno: c_ulonglong) {
+    assert!(!report.is_null(), "report must not be null");
+    *(*report).request_number_mut() = reqno;
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_get_request_number(report: *mut Report) -> c_ulonglong {
+    assert!(!report.is_null(), "report must not be null");
+    (*report).request_number()
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_set_duration_nanos(report: *mut Report, duration_nanos: c_ulonglong) {
+    assert!(!report.is_null(), "report must not be null");
+    *(*report).duration_nanos_mut() = duration_nanos;
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_get_duration_nanos(report: *mut Report) -> c_ulonglong {
+    assert!(!report.is_null(), "report must not be null");
+    (*report).duration_nanos()
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_set_command(report: *mut Report, command: *const c_uchar) {
+    assert!(!report.is_null(), "report must not be null");
+    *(*report).command_mut() =
+        if command.is_null() { None }
+        else { Some(c_string_to_str(command).to_owned()) };
+}
+
+#[no_mangle]
+pub unsafe extern "C"
+fn report_get_command(report: *mut Report) -> *const c_uchar {
+    assert!(!report.is_null(), "report must not be null");
+    match (*report).command_ref() {
+        None => std::ptr::null(),
+        Some(cmd) => str_to_c_string(cmd) as *const c_uchar,
+    }
+}
+
+
+/******************************************************************************/
 /*                              UClient                                       */
 /******************************************************************************/
 #[no_mangle]
