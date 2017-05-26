@@ -517,6 +517,16 @@ fn contents_destroy(contents: *mut Contents) {
 
 #[no_mangle]
 pub unsafe extern "C"
+fn contents_is_empty(contents: *mut Contents) -> c_int {
+    if contents.is_null() {  return true as c_int;  }
+    match &*contents {
+        &Contents::Text(ref text) => text.is_empty() as c_int,
+        &Contents::Entries(ref entries) => entries.is_empty() as c_int,
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C"
 fn contents_is_text(contents: *mut Contents) -> c_int {
     if contents.is_null() {  return false as c_int;  }
     match &*contents {
