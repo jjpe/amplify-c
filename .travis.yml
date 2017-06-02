@@ -5,8 +5,7 @@ language: rust
 rust:
 - nightly
 before_install:
-- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install capnp zeromq || brew upgrade
-  capnp zeromq; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install capnp zeromq || brew upgrade capnp zeromq; fi
 - echo "TravisCI build dir @ $TRAVIS_BUILD_DIR"
 - echo "Git tag @ $TRAVIS_TAG"
 script:
