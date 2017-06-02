@@ -1,6 +1,6 @@
 [package]
 name = "amplify-c"
-version = "0.10.3"
+version = "0.10.4"
 authors = ["Joey Ezechiëls <joey.ezechiels@gmail.com>"]
 description = "C bindings for Amplify"
 
