@@ -16,6 +16,9 @@ script:
 - cargo test --verbose --release
 - mv ${TRAVIS_BUILD_DIR}/target/debug/libamplify_c.dylib ${TRAVIS_BUILD_DIR}/target/debug/libamplify_c-${TRAVIS_TAG}-osx-dbg.dylib
 - mv ${TRAVIS_BUILD_DIR}/target/release/libamplify_c.dylib ${TRAVIS_BUILD_DIR}/target/release/libamplify_c-${TRAVIS_TAG}-osx.dylib
+- ls -ahl ${TRAVIS_BUILD_DIR}/target
+- ls -ahl ${TRAVIS_BUILD_DIR}/target/debug
+- ls -ahl ${TRAVIS_BUILD_DIR}/target/release
 deploy:
   provider: releases
   api_key:
