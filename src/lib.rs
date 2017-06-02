@@ -813,7 +813,7 @@ mod tests {
             broadcaster_tx.send(broadcaster.buffer_ref().clone()).unwrap();
         });
 
-        thread::spawn(move || {
+        thread::spawn(move || unsafe {
             let sink = uclient_new();
             let sink = uclient_connect(sink);
             let mut msg = Msg::default();
@@ -824,7 +824,7 @@ mod tests {
             sink1_tx.send(msg).unwrap();
         });
 
-        thread::spawn(move || {
+        thread::spawn(move || unsafe {
             let sink = uclient_new();
             let sink = uclient_connect(sink);
             let mut msg = Msg::default();
@@ -835,7 +835,7 @@ mod tests {
             sink2_tx.send(msg).unwrap();
         });
 
-        thread::spawn(move || {
+        thread::spawn(move || unsafe {
             let sink = uclient_new();
             let sink = uclient_connect(sink);
             let mut msg = Msg::default();
@@ -848,7 +848,7 @@ mod tests {
 
         // Initialize the source last, so that the entire network has already
         // settled once the Source sends the message.
-        thread::spawn(move || {
+        thread::spawn(move || unsafe {
             let source = uclient_new();
             let source = uclient_connect(source);
             let mut msg = Msg::default();
