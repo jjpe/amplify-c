@@ -1,13 +1,13 @@
 [package]
-name = "libcereal-c-api"
-version = "0.9.0"
+name = "amplify-c"
+version = "0.10.0"
 authors = ["Joey Ezechiëls <joey.ezechiels@gmail.com>"]
-description = "C bindings for libcereal"
+description = "C bindings for Amplify"
 
 [dependencies]
 cereal = { git = "https://github.com/jjpe/libcereal.git" }
 libc = "0.2"
 
 [lib]
-name = "libcereal_c_api"
+name = "amplify_c"
 crate-type = ["cdylib"]
