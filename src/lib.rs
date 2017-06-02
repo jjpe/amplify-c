@@ -1,9 +1,9 @@
 extern crate libc;
-extern crate libcereal;
+extern crate amplify;
 
 use libc::{c_char, c_int, c_uint, c_uchar, c_ulonglong };
-use libcereal::*;
-use libcereal::amplify::*;
+use amplify::*;
+use amplify::amplify::*;
 use std::ffi::{CStr, CString};
 use std::mem;
 

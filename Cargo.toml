@@ -1,12 +1,12 @@
 [package]
 name = "amplify-c"
-version = "0.10.0"
+version = "0.10.1"
 authors = ["Joey Ezechiëls <joey.ezechiels@gmail.com>"]
 description = "C bindings for Amplify"
 
 [dependencies]
-cereal = { git = "https://github.com/jjpe/libcereal.git" }
 libc = "0.2"
+amplify = { git = "https://github.com/jjpe/amplify.git" }
 
 [lib]
 name = "amplify_c"
