@@ -492,6 +492,13 @@ fn msg_get_ast(msg: *mut Msg) -> *const Ast {
     }
 }
 
+#[no_mangle]
+pub unsafe extern "C"
+fn msg_get_sent_at(msg: *mut Msg) -> c_ulonglong {
+    assert!(!msg.is_null(), "msg must not be null");
+    (*msg).sent_at()
+}
+
 /******************************************************************************/
 /*                              Contents                                      */
 /******************************************************************************/
