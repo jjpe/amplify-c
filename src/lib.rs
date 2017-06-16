@@ -864,7 +864,7 @@ mod tests {
             *msg.origin_mut() = Some(String::from("C API test Source"));
 
             thread::sleep(Duration::from_millis(1000));
-            cclient_send(source, &msg);
+            cclient_send(source, &mut msg);
             source_tx.send(msg).unwrap();
         });
 
