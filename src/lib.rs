@@ -316,8 +316,8 @@ fn cclient_set_tx_hwm(client: *mut CClient, hwm: c_uint) {
 
 #[no_mangle]
 pub unsafe extern "C"
-fn cclient_send(client: *mut CClient, msg: *const Msg) {
-    (*client).send(&*msg).unwrap(/* TODO: ClientErr */);
+fn cclient_send(client: *mut CClient, msg: *mut Msg) {
+    (*client).send(&mut *msg).unwrap(/* TODO: ClientErr */);
 }
 
 #[no_mangle]
