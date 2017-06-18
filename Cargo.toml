@@ -1,12 +1,12 @@
 [package]
 name = "amplify-c"
-version = "0.13.0"
+version = "0.13.1"
 authors = ["Joey Ezechiëls <joey.ezechiels@gmail.com>"]
 description = "C bindings for Amplify"
 
 [dependencies]
 libc = "0.2"
-amplify = { git = "https://github.com/jjpe/amplify.git", tag = "0.13.0" }
+amplify = { git = "https://github.com/jjpe/amplify.git", tag = "0.13.1" }
 
 [lib]
 name = "amplify_c"
