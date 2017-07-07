@@ -1,6 +1,6 @@
 [package]
 name = "amplify-c"
-version = "0.14.0"
+version = "0.14.1"
 authors = ["Joey Ezechiëls <joey.ezechiels@gmail.com>"]
 description = "C bindings for Amplify"
 
@@ -10,4 +10,4 @@ amplify = { git = "https://github.com/jjpe/amplify.git", tag = "0.14.0" }
 
 [lib]
 name = "amplify_c"
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "staticlib", "rlib"]
