@@ -6,7 +6,7 @@ description = "C bindings for Amplify"
 
 [dependencies]
 libc = "0.2"
-amplify = { git = "https://github.com/jjpe/amplify.git", tag = "0.14.0" }
+amplify = { git = "https://github.com/jjpe/amplify.git", tag = "0.14.1" }
 
 [lib]
 name = "amplify_c"
